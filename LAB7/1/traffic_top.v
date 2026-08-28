@@ -1,22 +1,42 @@
+// ============================================================================
+// [教學註解] 檔案：traffic_top.v
+// [教學註解] 模組：traffic_top
+// [教學註解] 功能：交通號誌頂層：整合時基、車道燈號、倒數顯示與相關控制模組。
+// [教學註解] 閱讀方式：先看 I/O → 再看組合邏輯(assign/always @*) → 最後看時序邏輯(posedge)。
+// [教學註解] 本次僅新增說明註解，不修改原本 Verilog 程式敘述與接線。
+// ============================================================================
 module traffic_top(clk, rst, day_night, light_led, led_com, seg7_out, seg7_sel);
+    // [教學註解] 輸入埠：clk=系統時脈。
     input       clk;
+    // [教學註解] 輸入埠：rst=系統重置。
     input       rst;
+    // [教學註解] 輸入埠：day_night=日/夜模式選擇。
     input       day_night;
+    // [教學註解] 輸出埠：light_led=紅黃綠燈 LED 控制。
     output[11:0] light_led;   // 擴展為 12 顆燈 (L1 ~ L12)
+    // [教學註解] 輸出埠：宣告此區塊中使用的訊號與位元寬度。
     output      led_com;
+    // [教學註解] 輸出埠：宣告此區塊中使用的訊號與位元寬度。
     output[2:0] seg7_sel;
+    // [教學註解] 輸出埠：宣告此區塊中使用的訊號與位元寬度。
     output[6:0] seg7_out;
 
+    // [教學註解] 連接線(wire)：clk_cnt_dn=倒數計數時脈；clk_fst=快速掃描時脈。
     wire        clk_cnt_dn, clk_fst, clk_sel;
+    // [教學註解] 連接線(wire)：g1_cnt=第一方向倒數值；g2_cnt=第二方向倒數值。
     wire [7:0]  g1_cnt, g2_cnt;
+    // [教學註解] 連接線(wire)：count_out=目前計數值。
     wire [3:0]  count_out;
     
     // 擷取出來的狀態機模式 (0~5)
+    // [教學註解] 連接線(wire)：宣告此區塊中使用的訊號與位元寬度。
     wire [2:0]  current_mode;
     
     // 原始紅綠燈訊號暫存
+    // [教學註解] 連接線(wire)：宣告此區塊中使用的訊號與位元寬度。
     wire [5:0]  internal_light; 
 
+    // [教學註解] 連續指定(assign)：描述組合邏輯連線，右式改變時左式會立即重新計算。
     assign led_com = 1'b1;
 
 
@@ -34,8 +54,10 @@ module traffic_top(clk, rst, day_night, light_led, led_com, seg7_out, seg7_sel);
     // ====================================================================
     // 七段顯示器客製化 (左邊倒數，右邊 mode)
     // ====================================================================
+    // [教學註解] 連接線(wire)：宣告此區塊中使用的訊號與位元寬度。
     wire [7:0] active_cnt = g1_cnt | g2_cnt;
 
+    // [教學註解] 連續指定(assign)：描述組合邏輯連線，右式改變時左式會立即重新計算。
     assign count_out = 
         // ------ 原本的右邊模塊 (現在改顯示在左邊) ------
         (seg7_sel == 3'b011) ? 4'd0 :                  // 百位: 顯示 0
@@ -52,14 +74,19 @@ module traffic_top(clk, rst, day_night, light_led, led_com, seg7_out, seg7_sel);
 
     //assign light_led = {internal_light[5:0], 6'b000000}; 
 	 // 修正後：將訊號對應到低位元，讓 L1~L6 亮起
+		// [教學註解] 連續指定(assign)：描述組合邏輯連線，右式改變時左式會立即重新計算。
 		assign light_led = {6'b000000, internal_light[5:0]};
 
     // 除頻器模組
+    // [教學註解] 實例化 freq_div（M0）：把此子模組接進目前階層，完成「時脈分頻器：利用二進位計數器的高位元，將輸入時脈降低為較慢的時脈供後級電路使用。」
     freq_div#(23) M0(.clk_in(clk), .reset(rst), .clk_out(clk_cnt_dn));
+    // [教學註解] 實例化 freq_div（M1）：把此子模組接進目前階層，完成「時脈分頻器：利用二進位計數器的高位元，將輸入時脈降低為較慢的時脈供後級電路使用。」
     freq_div#(21) M1(.clk_in(clk), .reset(rst), .clk_out(clk_fst));
+    // [教學註解] 實例化 freq_div（M2）：把此子模組接進目前階層，完成「時脈分頻器：利用二進位計數器的高位元，將輸入時脈降低為較慢的時脈供後級電路使用。」
     freq_div#(15) M2(.clk_in(clk), .reset(rst), .clk_out(clk_sel));
 
     // 整合主模組
+    // [教學註解] 實例化 traffic（M3）：把此子模組接進目前階層，完成「交通號誌核心整合：連接燈號控制器與兩組倒數計數器。」
     traffic M3(
         .clk_fst(clk_fst), .clk_cnt_dn(clk_cnt_dn), .rst(rst), .day_night(day_night),
         .g1_cnt(g1_cnt), .g2_cnt(g2_cnt), 
@@ -68,9 +95,11 @@ module traffic_top(clk, rst, day_night, light_led, led_com, seg7_out, seg7_sel);
     );
 
     // 七段顯示器解碼
+    // [教學註解] 實例化 bcd_to_seg7（M4）：把此子模組接進目前階層，完成「BCD 轉七段顯示解碼器：把 4-bit 數字代碼轉成 a~g 七個 LED 段的點亮組合。」
     bcd_to_seg7 M4(.bcd_in(count_out), .seg7(seg7_out));
 
     // ★ 七段顯示器掃描控制：必須設為 6，讓 6 個數字都會被輪掃到
+    // [教學註解] 實例化 seg7_select（M5）：把此子模組接進目前階層，完成「七段顯示多工選擇器：依掃描選擇訊號，輪流選出要顯示的 BCD 位數。」
     seg7_select#(6) M5(.clk(clk_sel), .reset(rst), .seg7_sel(seg7_sel)); 
 
 endmodule

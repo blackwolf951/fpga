@@ -1,9 +1,21 @@
+// ============================================================================
+// [教學註解] 檔案：rom_char.v
+// [教學註解] 模組：rom_char
+// [教學註解] 功能：字型 ROM：依位址查表輸出 8-bit 點矩陣字型資料。
+// [教學註解] 閱讀方式：先看 I/O → 再看組合邏輯(assign/always @*) → 最後看時序邏輯(posedge)。
+// [教學註解] 本次僅新增說明註解，不修改原本 Verilog 程式敘述與接線。
+// ============================================================================
 module rom_char(addr, data);
+    // [教學註解] 輸入埠：addr=ROM/地圖查表位址。
     input [6:0] addr;
+    // [教學註解] 輸出埠：data=ROM 輸出資料。
     output [7:0] data;
+    // [教學註解] 程序賦值暫存型訊號(reg)：data=ROM 輸出資料。
     reg [7:0] data;
     
+    // [教學註解] 組合邏輯 always：敏感度表中的訊號改變時重新執行此區塊。
     always @(addr) begin
+        // [教學註解] case 多路選擇：依目前輸入/狀態選擇對應的輸出資料。
         case(addr)
         7'd0: data = 8'h00; 7'd1: data = 8'h00; // Blank
         7'd2: data = 8'h00; 7'd3: data = 8'h00;
@@ -61,6 +73,7 @@ module rom_char(addr, data);
         7'd84: data = 8'h02; 7'd85: data = 8'h02;
         7'd86: data = 8'h3C; 7'd87: data = 8'h00;
         
+        // [教學註解] default 提供未列舉情況的安全輸出，組合邏輯中可避免輸出沒有被指定而推導出 latch。
         default: data = 8'h00; // 必須要有 default 防止鎖存器 (Latch) 產生
         endcase
     end

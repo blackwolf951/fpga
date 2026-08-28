@@ -1,8 +1,17 @@
+// ============================================================================
+// [教學註解] 檔案：pedestrian_rom_green.v
+// [教學註解] 模組：pedestrian_rom_green
+// [教學註解] 功能：綠色行人圖示 ROM：依掃描列位址輸出 8×8 綠色圖樣資料。
+// [教學註解] 閱讀方式：先看 I/O → 再看組合邏輯(assign/always @*) → 最後看時序邏輯(posedge)。
+// [教學註解] 本次僅新增說明註解，不修改原本 Verilog 程式敘述與接線。
+// ============================================================================
 module pedestrian_rom_green(
     input [3:0] frame, input [2:0] row,
     output reg [7:0] data
 );
+    // [教學註解] 組合邏輯 always @(*)：任何被讀取的輸入改變時都重新計算輸出。
     always @(*) begin
+        // [教學註解] case 多路選擇：依目前輸入/狀態選擇對應的輸出資料。
         case ({frame,row})
             7'd0 : data = 8'h0A;  7'd1 : data = 8'h04;
             7'd2 : data = 8'h04;  7'd3 : data = 8'h1F;
@@ -44,6 +53,7 @@ module pedestrian_rom_green(
             7'd60: data = 8'h20;  7'd61: data = 8'h70;
             7'd62: data = 8'h70;  7'd63: data = 8'h70;
 
+            // [教學註解] default 提供未列舉情況的安全輸出，組合邏輯中可避免輸出沒有被指定而推導出 latch。
             default: data = 8'h00;
         endcase
     end

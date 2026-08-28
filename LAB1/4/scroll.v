@@ -1,18 +1,34 @@
+// ============================================================================
+// [教學註解] 檔案：scroll.v
+// [教學註解] 模組：scroll
+// [教學註解] 功能：循環移位暫存器：在時脈觸發時移動位元圖樣，用於 LED 跑馬燈/移位效果。
+// [教學註解] 閱讀方式：先看 I/O → 再看組合邏輯(assign/always @*) → 最後看時序邏輯(posedge)。
+// [教學註解] 本次僅新增說明註解，不修改原本 Verilog 程式敘述與接線。
+// ============================================================================
 module scroll (clk, reset, shift_red, shift_green);
+    // [教學註解] 輸入埠：clk=系統時脈；reset=系統重置。
     input clk, reset;
+    // [教學註解] 輸出埠：宣告此區塊中使用的訊號與位元寬度。
     output [7:0] shift_red, shift_green;
+    // [教學註解] 連接線(wire)：宣告此區塊中使用的訊號與位元寬度。
     wire [7:0] shift_red, shift_green;
+    // [教學註解] 程序賦值暫存型訊號(reg)：宣告此區塊中使用的訊號與位元寬度。
     reg [8:0] pattern;
 
     // 移除多餘的串接大括號 {}，讓語法更簡潔
+    // [教學註解] 連續指定(assign)搭配 ?: 條件運算子，描述純組合邏輯，不需要時脈。
     assign shift_red   = pattern[8] ? 8'b00000000 : pattern[7:0];
+    // [教學註解] 連續指定(assign)搭配 ?: 條件運算子，描述純組合邏輯，不需要時脈。
     assign shift_green = pattern[8] ? pattern[7:0] : 8'b00000000;
 
     // 將 always 區塊獨立換行，提升可讀性
+    // [教學註解] 時序邏輯：在時脈邊緣更新狀態；reset/rst 也列在敏感度表中，所以是非同步重置。
     always @(posedge clk or posedge reset) begin
+        // [教學註解] 重置判斷：重置成立時先把暫存器帶回已知初始狀態，避免上電後狀態不確定。
         if (reset) begin
             pattern <= 9'b0_1110_0000; // 改用非阻塞賦值 (<=)
         end else begin
+            // [教學註解] case 多路選擇：依目前輸入/狀態選擇對應的輸出資料。
             case(pattern)
                 9'b0_11100000: pattern <= 9'b0_01110000; // 改用非阻塞賦值 (<=)
                 9'b0_01110000: pattern <= 9'b0_00111000;
@@ -25,6 +41,7 @@ module scroll (clk, reset, shift_red, shift_green);
                 9'b1_00111000: pattern <= 9'b1_01110000;
                 9'b1_01110000: pattern <= 9'b1_11100000;
                 9'b1_11100000: pattern <= 9'b0_01110000;
+                // [教學註解] default 提供未列舉情況的安全輸出，組合邏輯中可避免輸出沒有被指定而推導出 latch。
                 default: pattern <= 9'b0_11100000;
             endcase
         end
