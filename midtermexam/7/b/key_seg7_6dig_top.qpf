@@ -1,0 +1,3 @@
+QUARTUS_VERSION = "18.1"
+DATE = "03 September 2026"
+PROJECT_REVISION = "key_seg7_6dig_top"
